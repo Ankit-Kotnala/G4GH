@@ -51,6 +51,8 @@ const studentTab = document.querySelector("#studentTab");
 const teacherMode = document.querySelector("#teacherMode");
 const studentMode = document.querySelector("#studentMode");
 
+let currentImageDataUrl = "";
+
 function list(items) {
   return `<ul>${items.map((item) => `<li>${item}</li>`).join("")}</ul>`;
 }
@@ -103,26 +105,51 @@ imageInput.addEventListener("change", (event) => {
   const [file] = event.target.files;
   if (!file) return;
 
-  previewImage.src = URL.createObjectURL(file);
-  previewImage.alt = "Uploaded classroom material awaiting analysis";
+  const reader = new FileReader();
+  reader.addEventListener("load", () => {
+    currentImageDataUrl = reader.result;
+    previewImage.src = currentImageDataUrl;
+    previewImage.alt = "Uploaded classroom material awaiting analysis";
+  });
+  reader.readAsDataURL(file);
 });
 
 sampleButton.addEventListener("click", () => {
   previewImage.src = sampleImage;
   previewImage.alt = "Sample textbook page about plant parts with a simple diagram";
+  currentImageDataUrl = "";
   imageInput.value = "";
 });
 
-analyzeButton.addEventListener("click", () => {
+async function analyzeImage() {
   loadingState.hidden = false;
   analyzeButton.disabled = true;
 
-  window.setTimeout(() => {
+  try {
+    if (window.location.protocol === "file:") {
+      renderOutput(mockGemmaOutput);
+      return;
+    }
+
+    const response = await fetch("/api/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        imageDataUrl: currentImageDataUrl,
+        language: languageSelect.value,
+      }),
+    });
+    const payload = await response.json();
+    renderOutput(payload.output || mockGemmaOutput);
+  } catch (error) {
     renderOutput(mockGemmaOutput);
+  } finally {
     loadingState.hidden = true;
     analyzeButton.disabled = false;
-  }, 850);
-});
+  }
+}
+
+analyzeButton.addEventListener("click", analyzeImage);
 
 teacherTab.addEventListener("click", () => setMode("teacher"));
 studentTab.addEventListener("click", () => setMode("student"));
@@ -140,4 +167,3 @@ speakButton.addEventListener("click", () => {
 languageSelect.addEventListener("change", () => renderOutput(mockGemmaOutput));
 
 renderOutput(mockGemmaOutput);
-

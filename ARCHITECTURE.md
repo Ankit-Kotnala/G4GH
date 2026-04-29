@@ -41,6 +41,8 @@ Teacher Mode + Student Study Mode UI
 - Validates structured response
 - Returns normalized output to the frontend
 
+The current prototype includes a dependency-free Node server at `server/server.js`. It serves the app and exposes `POST /api/analyze`. Mock mode is enabled by default so the UI can be demonstrated before the local Gemma runtime is installed.
+
 ### Local Model Runtime
 
 Target options:
@@ -83,4 +85,3 @@ The model response should be normalized into sections such as:
 ## Demo Strategy
 
 The demo should use one strong sample image and show the full pipeline. If live model latency is high, the app can cache the latest generated result while still showing the real local inference path in code and writeup.
-

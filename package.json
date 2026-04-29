@@ -1,0 +1,11 @@
+{
+  "name": "classroom-access-kit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Offline-first Gemma 4 classroom and accessible study assistant prototype.",
+  "scripts": {
+    "dev": "node server/server.js",
+    "check": "node --check app/app.js && node --check server/server.js"
+  }
+}
+

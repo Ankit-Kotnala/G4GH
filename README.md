@@ -56,7 +56,18 @@ Planning docs and the first static prototype are in place.
 
 Open `app/index.html` in a browser to try the current prototype. It uses mocked Gemma output while the local model runtime is being connected.
 
+You can also run the local prototype server:
+
+```bash
+npm run dev
+```
+
+By default the server uses mock output. To call a local Ollama runtime instead:
+
+```bash
+USE_MOCK=false GEMMA_MODEL=gemma4 npm run dev
+```
+
 ## Next Engineering Step
 
 Connect the analysis flow to a local Gemma 4 runtime, starting with Ollama if available on the demo machine.
-
