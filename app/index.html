@@ -8,54 +8,154 @@
   </head>
   <body>
     <header class="app-header">
-      <div>
+      <div class="brand-lockup">
         <p class="eyebrow">Gemma 4 Good Hackathon</p>
         <h1>Classroom Access Kit</h1>
+        <p class="tagline">One classroom image becomes a teacher kit and an accessible study companion.</p>
       </div>
-      <div class="status-pill" aria-label="Local-first demo status">
-        <span class="status-dot" aria-hidden="true"></span>
-        Offline-ready prototype
+      <div class="header-signals" aria-label="Prototype status">
+        <span id="runtimeStatus" class="status-chip is-waiting">
+          <span class="status-dot" aria-hidden="true"></span>
+          Checking local runtime
+        </span>
+        <span class="status-chip">Offline-first</span>
+        <span class="status-chip">Screen-reader ready</span>
       </div>
     </header>
 
-    <main class="shell">
-      <section class="input-panel" aria-labelledby="input-title">
+    <main class="app-shell">
+      <section class="input-rail" aria-labelledby="input-title">
         <div class="section-heading">
           <p class="eyebrow">Classroom source</p>
-          <h2 id="input-title">One photo in</h2>
+          <h2 id="input-title">Capture the lesson</h2>
         </div>
 
-        <div class="upload-zone">
+        <div id="dropZone" class="upload-zone">
           <img
             id="previewImage"
             src="./assets/sample-classroom-page.svg"
             alt="Sample textbook page about plant parts with a simple diagram"
           />
+          <div class="image-badge" id="imageBadge">Sample page loaded</div>
         </div>
 
-        <div class="controls">
-          <label class="file-button" for="imageInput">Upload image</label>
+        <div class="control-grid">
+          <label class="button-like" for="imageInput">Upload</label>
           <input id="imageInput" type="file" accept="image/*" />
-          <button id="sampleButton" type="button">Use sample</button>
+          <label class="button-like" for="cameraInput">Camera</label>
+          <input id="cameraInput" type="file" accept="image/*" capture="environment" />
+          <button id="sampleButton" type="button">Sample</button>
           <button id="analyzeButton" class="primary" type="button">Analyze</button>
         </div>
 
-        <div class="settings">
-          <label for="languageSelect">Local language</label>
-          <select id="languageSelect">
-            <option value="Hindi">Hindi</option>
-            <option value="Spanish">Spanish</option>
-            <option value="Swahili">Swahili</option>
-            <option value="Bengali">Bengali</option>
-          </select>
+        <div class="settings-grid" aria-label="Analysis settings">
+          <label>
+            <span>Local language</span>
+            <select id="languageSelect">
+              <option value="Hindi">Hindi</option>
+              <option value="Spanish">Spanish</option>
+              <option value="Swahili">Swahili</option>
+              <option value="Bengali">Bengali</option>
+              <option value="English">English</option>
+            </select>
+          </label>
+          <label>
+            <span>Grade band</span>
+            <select id="gradeSelect">
+              <option value="Primary school">Primary school</option>
+              <option value="Middle school">Middle school</option>
+              <option value="Secondary school">Secondary school</option>
+            </select>
+          </label>
+          <label>
+            <span>Learner profile</span>
+            <select id="profileSelect">
+              <option value="Blind or low-vision student">Blind / low vision</option>
+              <option value="Dyslexic or struggling reader">Dyslexic reader</option>
+              <option value="Mixed-ability classroom">Mixed ability</option>
+              <option value="Language-diverse learner">Language diverse</option>
+            </select>
+          </label>
+          <label>
+            <span>Teaching focus</span>
+            <select id="focusSelect">
+              <option value="Concept clarity and revision">Concept clarity</option>
+              <option value="Worksheet and quiz creation">Worksheet / quiz</option>
+              <option value="Accessible audio study">Audio study</option>
+              <option value="Local-language support">Language support</option>
+            </select>
+          </label>
+        </div>
+
+        <label class="goal-box">
+          <span>Teacher note</span>
+          <textarea
+            id="teacherNote"
+            rows="3"
+            maxlength="260"
+            placeholder="Optional: add a lesson goal, class context, or student need"
+          ></textarea>
+        </label>
+
+        <div class="demo-actions">
+          <button id="judgeDemoButton" type="button">Run judge demo</button>
+          <button id="clearButton" type="button">Reset</button>
+        </div>
+
+        <div class="pipeline-panel" aria-live="polite">
+          <div class="panel-title-row">
+            <h3>Local Gemma pipeline</h3>
+            <span id="analysisTime">Ready</span>
+          </div>
+          <ol class="pipeline-list">
+            <li id="step-image" class="active">Image received</li>
+            <li id="step-vision">Vision and OCR pass</li>
+            <li id="step-teacher">Teacher resources</li>
+            <li id="step-access">Accessible study pack</li>
+            <li id="step-ready">Ready for class</li>
+          </ol>
         </div>
       </section>
 
-      <section class="output-panel" aria-labelledby="output-title">
-        <div class="section-heading">
-          <p class="eyebrow">Generated support</p>
-          <h2 id="output-title">Two outcomes out</h2>
+      <section class="workspace" aria-labelledby="output-title">
+        <div class="workspace-top">
+          <div class="section-heading">
+            <p class="eyebrow">Generated support</p>
+            <h2 id="output-title">Inclusive classroom output</h2>
+          </div>
+          <div class="toolbar" aria-label="Output actions">
+            <button id="copyButton" type="button">Copy study pack</button>
+            <button id="printButton" type="button">Print worksheet</button>
+          </div>
         </div>
+
+        <div class="impact-strip" aria-label="Generated output summary">
+          <div>
+            <strong id="resourceCount">10</strong>
+            <span>resources</span>
+          </div>
+          <div>
+            <strong id="accessibilityCount">4</strong>
+            <span>accessibility outputs</span>
+          </div>
+          <div>
+            <strong id="modeLabel">Mock</strong>
+            <span>runtime mode</span>
+          </div>
+          <div>
+            <strong id="languageLabel">Hindi</strong>
+            <span>language</span>
+          </div>
+        </div>
+
+        <section class="source-summary" aria-labelledby="summary-title">
+          <div>
+            <p class="eyebrow">Gemma 4 reading</p>
+            <h3 id="summary-title">Source summary</h3>
+          </div>
+          <p id="sourceSummary"></p>
+          <div id="signalList" class="signal-list" aria-label="Detected learning signals"></div>
+        </section>
 
         <div class="tabs" role="tablist" aria-label="Output mode">
           <button id="teacherTab" class="tab active" role="tab" aria-selected="true" aria-controls="teacherMode">
@@ -64,19 +164,29 @@
           <button id="studentTab" class="tab" role="tab" aria-selected="false" aria-controls="studentMode">
             Student Study Mode
           </button>
+          <button id="traceTab" class="tab" role="tab" aria-selected="false" aria-controls="traceMode">
+            Gemma Trace
+          </button>
         </div>
 
         <div id="loadingState" class="loading" hidden>
           <span class="loader" aria-hidden="true"></span>
-          Gemma 4 is reading the classroom image locally...
+          <span id="loadingText">Gemma 4 is reading the classroom image locally...</span>
         </div>
 
         <div id="teacherMode" class="mode active" role="tabpanel" aria-labelledby="teacherTab">
-          <article class="result-block">
-            <h3>Lesson plan</h3>
+          <article class="result-block feature-block">
+            <div class="block-title-row">
+              <h3>Lesson plan</h3>
+              <span class="mini-pill">Teacher ready</span>
+            </div>
             <div id="lessonPlan"></div>
           </article>
           <article class="result-block">
+            <h3>Classroom activity</h3>
+            <div id="classroomActivity"></div>
+          </article>
+          <article class="result-block worksheet-print">
             <h3>Worksheet</h3>
             <div id="worksheet"></div>
           </article>
@@ -85,13 +195,17 @@
             <div id="differentiated"></div>
           </article>
           <article class="result-block">
+            <h3>Assessment check</h3>
+            <div id="assessmentRubric"></div>
+          </article>
+          <article class="result-block">
             <h3>Local-language version</h3>
-            <div id="translation"></div>
+            <p id="translation"></p>
           </article>
         </div>
 
         <div id="studentMode" class="mode" role="tabpanel" aria-labelledby="studentTab" hidden>
-          <article class="result-block">
+          <article class="result-block feature-block">
             <div class="block-title-row">
               <h3>Audio study script</h3>
               <button id="speakButton" type="button">Play audio</button>
@@ -103,12 +217,56 @@
             <p id="screenReaderSummary"></p>
           </article>
           <article class="result-block">
-            <h3>Visual description</h3>
+            <h3>Step-by-step visual description</h3>
             <p id="visualDescription"></p>
+          </article>
+          <article class="result-block">
+            <h3>Key vocabulary</h3>
+            <div id="keyVocabulary"></div>
           </article>
           <article class="result-block">
             <h3>Practice questions</h3>
             <div id="studentPractice"></div>
+          </article>
+          <article class="result-block ask-panel">
+            <h3>Ask about this lesson</h3>
+            <div class="ask-row">
+              <input id="questionInput" type="text" placeholder="Ask a follow-up question" />
+              <button id="askButton" type="button">Ask</button>
+            </div>
+            <p id="answerText" aria-live="polite"></p>
+          </article>
+        </div>
+
+        <div id="traceMode" class="mode" role="tabpanel" aria-labelledby="traceTab" hidden>
+          <article class="result-block trace-block">
+            <h3>Runtime</h3>
+            <dl class="trace-grid">
+              <div>
+                <dt>Mode</dt>
+                <dd id="traceModeValue">mock</dd>
+              </div>
+              <div>
+                <dt>Model</dt>
+                <dd id="traceModelValue">gemma4</dd>
+              </div>
+              <div>
+                <dt>Latency</dt>
+                <dd id="traceLatencyValue">0 ms</dd>
+              </div>
+              <div>
+                <dt>Schema</dt>
+                <dd id="traceSchemaValue">validated</dd>
+              </div>
+            </dl>
+          </article>
+          <article class="result-block">
+            <h3>Confidence notes</h3>
+            <div id="confidenceNotes"></div>
+          </article>
+          <article class="result-block">
+            <h3>Structured output keys</h3>
+            <div id="schemaKeys"></div>
           </article>
         </div>
       </section>
@@ -117,4 +275,3 @@
     <script src="./app.js"></script>
   </body>
 </html>
-

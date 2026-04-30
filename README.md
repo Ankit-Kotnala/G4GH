@@ -52,9 +52,17 @@ The hackathon submission needs:
 
 ## Current Status
 
-Planning docs and the first static prototype are in place.
+A polished end-to-end prototype is in place. It includes:
 
-Open `app/index.html` in a browser to try the current prototype. It uses mocked Gemma output while the local model runtime is being connected.
+- image upload, camera capture, drag-and-drop, and sample demo flow
+- local language, grade band, learner profile, and teaching focus settings
+- Teacher Mode with lesson plan, activity, worksheet, differentiation, assessment, and translation
+- Student Study Mode with screen-reader summary, visual description, audio study script, vocabulary, practice questions, and follow-up Q&A
+- Gemma Trace view with runtime mode, model name, latency, schema status, and confidence notes
+- print worksheet and copy study pack actions
+- mock mode for reliable judging plus an Ollama/Gemma runtime path for local inference
+
+Open `app/index.html` in a browser for the static fallback experience, or run the local server for the full prototype.
 
 You can also run the local prototype server:
 
@@ -68,6 +76,12 @@ By default the server uses mock output. To call a local Ollama runtime instead:
 USE_MOCK=false GEMMA_MODEL=gemma4 npm run dev
 ```
 
+The prototype also exposes:
+
+- `GET /api/status`
+- `POST /api/analyze`
+- `POST /api/ask`
+
 ## Next Engineering Step
 
-Connect the analysis flow to a local Gemma 4 runtime, starting with Ollama if available on the demo machine.
+Test the Ollama path on the demo machine with the target Gemma 4 model, then record the 3-minute submission video using the built-in judge demo flow.

@@ -19,8 +19,9 @@ Gemma 4 local runtime
    v
 Structured classroom outputs
    |
-   v
-Teacher Mode + Student Study Mode UI
+   +--> Teacher Mode UI
+   +--> Student Study Mode UI
+   +--> Gemma Trace UI
 ```
 
 ## Main Components
@@ -28,10 +29,15 @@ Teacher Mode + Student Study Mode UI
 ### Frontend
 
 - Image upload or camera capture
+- Drag-and-drop sample flow for demos
+- Language, grade band, learner profile, and teaching focus controls
 - Mode switcher for Teacher Mode and Student Study Mode
+- Gemma Trace view for runtime and schema transparency
 - Accessible output panels
 - Printable worksheet view
 - Screen-reader-friendly study view
+- Browser text-to-speech for the audio study script
+- Follow-up Q&A against the generated lesson pack
 
 ### Backend
 
@@ -40,8 +46,9 @@ Teacher Mode + Student Study Mode UI
 - Calls local model runtime
 - Validates structured response
 - Returns normalized output to the frontend
+- Provides a status endpoint and a lesson Q&A endpoint
 
-The current prototype includes a dependency-free Node server at `server/server.js`. It serves the app and exposes `POST /api/analyze`. Mock mode is enabled by default so the UI can be demonstrated before the local Gemma runtime is installed.
+The current prototype includes a dependency-free Node server at `server/server.js`. It serves the app and exposes `GET /api/status`, `POST /api/analyze`, and `POST /api/ask`. Mock mode is enabled by default so the UI can be demonstrated reliably before the local Gemma runtime is installed.
 
 ### Local Model Runtime
 
@@ -57,15 +64,20 @@ The first implementation should target Ollama because it is fast to demonstrate 
 The model response should be normalized into sections such as:
 
 - `sourceSummary`
+- `contentSignals`
 - `teacherLessonPlan`
+- `classroomActivity`
 - `worksheet`
 - `differentiatedVersions`
+- `assessmentRubric`
 - `simplifiedExplanation`
 - `localLanguageVersion`
 - `visualDescription`
 - `screenReaderSummary`
 - `audioStudyScript`
 - `studentPractice`
+- `keyVocabulary`
+- `confidenceNotes`
 
 ## Accessibility Requirements
 
