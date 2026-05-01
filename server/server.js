@@ -10,8 +10,14 @@ loadEnvFile(path.join(appDir, ".env"));
 
 const port = Number(process.env.PORT || 4173);
 const ollamaUrl = process.env.OLLAMA_URL || "http://localhost:11434";
-const gemmaModel = process.env.GEMMA_MODEL || "gemma4";
-const useMock = process.env.USE_MOCK !== "false";
+const geminiApiUrl =
+  process.env.GEMINI_API_URL || "https://generativelanguage.googleapis.com/v1beta";
+const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
+const geminiModel = normalizeGemmaModel(
+  process.env.GEMINI_MODEL || process.env.GEMMA_MODEL || "gemma-4-26b-a4b-it",
+);
+const ollamaModel = process.env.OLLAMA_MODEL || process.env.GEMMA_MODEL || "gemma4";
+const runtimeMode = resolveRuntimeMode();
 
 const contentTypes = {
   ".html": "text/html; charset=utf-8",
@@ -54,6 +60,43 @@ const languagePacks = {
   English:
     "The main parts of a plant are roots, stem, leaves, flowers, and fruit. Roots take in water, the stem supports the plant, leaves make food, and flowers help make seeds.",
 };
+
+function normalizeGemmaModel(modelName) {
+  const value = String(modelName || "").trim();
+  const shortcuts = new Set(["gemma4", "gemma-4", "gemma_4", "gemma"]);
+
+  if (!value || shortcuts.has(value.toLowerCase())) {
+    return "gemma-4-26b-a4b-it";
+  }
+
+  return value;
+}
+
+function resolveRuntimeMode() {
+  const explicitMode = String(process.env.AI_RUNTIME || process.env.RUNTIME || "").toLowerCase();
+
+  if (["gemini", "ollama", "mock"].includes(explicitMode)) {
+    return explicitMode;
+  }
+
+  if (process.env.USE_MOCK === "true") {
+    return "mock";
+  }
+
+  if (process.env.USE_MOCK === "false") {
+    return geminiApiKey ? "gemini" : "ollama";
+  }
+
+  return geminiApiKey ? "gemini" : "mock";
+}
+
+function activeModelName() {
+  return runtimeMode === "ollama" ? ollamaModel : geminiModel;
+}
+
+function geminiModelCandidates() {
+  return [...new Set([geminiModel, "gemma-4-26b-a4b-it", "gemma-4-31b-it"])];
+}
 
 function loadEnvFile(filePath) {
   if (!fs.existsSync(filePath)) return;
@@ -328,9 +371,103 @@ async function fetchWithTimeout(url, options, timeoutMs = 55_000) {
   }
 }
 
+function parseImageDataUrl(imageDataUrl) {
+  const match = String(imageDataUrl || "").match(/^data:([^;]+);base64,(.*)$/i);
+
+  if (!match) {
+    return null;
+  }
+
+  return {
+    mimeType: match[1] || "image/jpeg",
+    data: match[2] || "",
+  };
+}
+
+function extractGeminiText(payload) {
+  return (payload?.candidates || [])
+    .flatMap((candidate) => candidate?.content?.parts || [])
+    .map((part) => part?.text || "")
+    .join("\n")
+    .trim();
+}
+
+async function generateWithGemini({ prompt, imageDataUrl = "", responseMimeType = "" }) {
+  if (!geminiApiKey) {
+    throw new Error("GEMINI_API_KEY is not set");
+  }
+
+  const image = parseImageDataUrl(imageDataUrl);
+  const parts = [];
+
+  if (image?.data) {
+    parts.push({
+      inline_data: {
+        mime_type: image.mimeType,
+        data: image.data,
+      },
+    });
+  }
+
+  parts.push({ text: prompt });
+
+  const generationConfig = {
+    temperature: 0.2,
+    topP: 0.85,
+    thinkingConfig: {
+      thinkingLevel: "high",
+    },
+  };
+
+  if (responseMimeType) {
+    generationConfig.responseMimeType = responseMimeType;
+  }
+
+  let lastError;
+
+  for (const model of geminiModelCandidates()) {
+    try {
+      const response = await fetchWithTimeout(`${geminiApiUrl}/models/${model}:generateContent`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": geminiApiKey,
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts,
+            },
+          ],
+          generationConfig,
+        }),
+      });
+
+      if (!response.ok) {
+        const details = await response.text();
+        throw new Error(`Gemini API returned ${response.status}: ${details.slice(0, 220)}`);
+      }
+
+      const payload = await response.json();
+      const text = extractGeminiText(payload);
+
+      if (!text) {
+        throw new Error("Gemini API returned an empty response");
+      }
+
+      return { text, model };
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error("Gemini API request failed");
+}
+
 async function analyzeWithOllama({ imageDataUrl, settings }) {
   const body = {
-    model: gemmaModel,
+    model: ollamaModel,
     prompt: buildPrompt(settings),
     images: imageDataUrl ? [imageDataUrlToBase64(imageDataUrl)] : [],
     stream: false,
@@ -353,6 +490,19 @@ async function analyzeWithOllama({ imageDataUrl, settings }) {
 
   const payload = await response.json();
   return validateOutput(normalizeGemmaJson(payload.response || "{}"), settings);
+}
+
+async function analyzeWithGemini({ imageDataUrl, settings }) {
+  const result = await generateWithGemini({
+    prompt: buildPrompt(settings),
+    imageDataUrl,
+    responseMimeType: "application/json",
+  });
+
+  return {
+    model: result.model,
+    output: validateOutput(normalizeGemmaJson(result.text || "{}"), settings),
+  };
 }
 
 function buildAskPrompt({ question, output, settings }) {
@@ -387,7 +537,7 @@ async function answerWithOllama({ question, output, settings }) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: gemmaModel,
+      model: ollamaModel,
       prompt: buildAskPrompt({ question, output, settings }),
       stream: false,
       options: { temperature: 0.2 },
@@ -400,6 +550,17 @@ async function answerWithOllama({ question, output, settings }) {
 
   const payload = await response.json();
   return String(payload.response || "").trim() || mockAnswer(question);
+}
+
+async function answerWithGemini({ question, output, settings }) {
+  const result = await generateWithGemini({
+    prompt: buildAskPrompt({ question, output, settings }),
+  });
+
+  return {
+    model: result.model,
+    answer: result.text.trim() || mockAnswer(question),
+  };
 }
 
 function serveStatic(request, response) {
@@ -435,9 +596,11 @@ const server = http.createServer(async (request, response) => {
 
   if (request.method === "GET" && requestUrl.pathname === "/api/status") {
     sendJson(response, 200, {
-      mode: useMock ? "mock" : "ollama",
-      model: gemmaModel,
-      local: true,
+      mode: runtimeMode,
+      model: activeModelName(),
+      hosted: runtimeMode === "gemini",
+      local: runtimeMode === "ollama",
+      hasGeminiKey: Boolean(geminiApiKey),
       schemaKeys,
     });
     return;
@@ -458,10 +621,10 @@ const server = http.createServer(async (request, response) => {
         teacherNote: payload.teacherNote || "",
       };
 
-      if (useMock) {
+      if (runtimeMode === "mock") {
         sendJson(response, 200, {
           mode: "mock",
-          model: gemmaModel,
+          model: activeModelName(),
           latencyMs: Date.now() - startedAt,
           schema: "validated",
           output: validateOutput(createDemoOutput(settings), settings),
@@ -469,22 +632,38 @@ const server = http.createServer(async (request, response) => {
         return;
       }
 
-      const output = await analyzeWithOllama({
+      if (runtimeMode === "ollama") {
+        const output = await analyzeWithOllama({
+          imageDataUrl: payload.imageDataUrl || "",
+          settings,
+        });
+
+        sendJson(response, 200, {
+          mode: "ollama",
+          model: ollamaModel,
+          latencyMs: Date.now() - startedAt,
+          schema: "validated",
+          output,
+        });
+        return;
+      }
+
+      const result = await analyzeWithGemini({
         imageDataUrl: payload.imageDataUrl || "",
         settings,
       });
 
       sendJson(response, 200, {
-        mode: "ollama",
-        model: gemmaModel,
+        mode: "gemini",
+        model: result.model,
         latencyMs: Date.now() - startedAt,
         schema: "validated",
-        output,
+        output: result.output,
       });
     } catch (error) {
       sendJson(response, 200, {
         mode: "fallback",
-        model: gemmaModel,
+        model: activeModelName(),
         latencyMs: Date.now() - startedAt,
         schema: "fallback",
         warning: error.message,
@@ -502,7 +681,7 @@ const server = http.createServer(async (request, response) => {
       const question = payload.question || "";
       const settings = payload.settings || {};
 
-      if (useMock) {
+      if (runtimeMode === "mock") {
         sendJson(response, 200, {
           mode: "mock",
           latencyMs: Date.now() - startedAt,
@@ -511,15 +690,31 @@ const server = http.createServer(async (request, response) => {
         return;
       }
 
-      const answer = await answerWithOllama({
+      if (runtimeMode === "ollama") {
+        const answer = await answerWithOllama({
+          question,
+          output: payload.output || {},
+          settings,
+        });
+        sendJson(response, 200, {
+          mode: "ollama",
+          model: ollamaModel,
+          latencyMs: Date.now() - startedAt,
+          answer,
+        });
+        return;
+      }
+
+      const result = await answerWithGemini({
         question,
         output: payload.output || {},
         settings,
       });
       sendJson(response, 200, {
-        mode: "ollama",
+        mode: "gemini",
+        model: result.model,
         latencyMs: Date.now() - startedAt,
-        answer,
+        answer: result.answer,
       });
     } catch (error) {
       sendJson(response, 200, {
@@ -543,5 +738,5 @@ const server = http.createServer(async (request, response) => {
 
 server.listen(port, () => {
   console.log(`Classroom Access Kit running at http://localhost:${port}`);
-  console.log(`Analysis mode: ${useMock ? "mock" : `ollama (${gemmaModel})`}`);
+  console.log(`Analysis mode: ${runtimeMode} (${activeModelName()})`);
 });

@@ -9,25 +9,29 @@
   <body>
     <header class="app-header">
       <div class="brand-lockup">
-        <p class="eyebrow">Gemma 4 Good Hackathon</p>
-        <h1>Classroom Access Kit</h1>
-        <p class="tagline">One classroom image becomes a teacher kit and an accessible study companion.</p>
+        <div class="brand-mark" aria-hidden="true">CAK</div>
+        <div>
+          <p class="eyebrow">Gemma 4 Good Hackathon</p>
+          <h1>Classroom Access Kit</h1>
+          <p class="tagline">Turn any lesson image into an inclusive teacher pack and audio-first study guide.</p>
+        </div>
       </div>
       <div class="header-signals" aria-label="Prototype status">
         <span id="runtimeStatus" class="status-chip is-waiting">
           <span class="status-dot" aria-hidden="true"></span>
-          Checking local runtime
+          Checking AI runtime
         </span>
-        <span class="status-chip">Offline-first</span>
-        <span class="status-chip">Screen-reader ready</span>
+        <span class="status-chip">Offline fallback</span>
+        <span class="status-chip">Print ready</span>
       </div>
     </header>
 
     <main class="app-shell">
       <section class="input-rail" aria-labelledby="input-title">
         <div class="section-heading">
-          <p class="eyebrow">Classroom source</p>
+          <p class="eyebrow">Source material</p>
           <h2 id="input-title">Capture the lesson</h2>
+          <p>Upload a page, board photo, diagram, worksheet, or use the sample for a fast demo.</p>
         </div>
 
         <div id="dropZone" class="upload-zone">
@@ -39,13 +43,13 @@
           <div class="image-badge" id="imageBadge">Sample page loaded</div>
         </div>
 
-        <div class="control-grid">
-          <label class="button-like" for="imageInput">Upload</label>
+        <div class="control-grid" aria-label="Image actions">
+          <label class="button-like" for="imageInput"><span aria-hidden="true">+</span> Upload</label>
           <input id="imageInput" type="file" accept="image/*" />
-          <label class="button-like" for="cameraInput">Camera</label>
+          <label class="button-like" for="cameraInput"><span aria-hidden="true">[]</span> Camera</label>
           <input id="cameraInput" type="file" accept="image/*" capture="environment" />
-          <button id="sampleButton" type="button">Sample</button>
-          <button id="analyzeButton" class="primary" type="button">Analyze</button>
+          <button id="sampleButton" type="button"><span aria-hidden="true">0</span> Sample</button>
+          <button id="analyzeButton" class="primary" type="button"><span aria-hidden="true">></span> Analyze</button>
         </div>
 
         <div class="settings-grid" aria-label="Analysis settings">
@@ -88,23 +92,23 @@
         </div>
 
         <label class="goal-box">
-          <span>Teacher note</span>
+          <span>Classroom constraint</span>
           <textarea
             id="teacherNote"
             rows="3"
             maxlength="260"
-            placeholder="Optional: add a lesson goal, class context, or student need"
+            placeholder="Example: 40 students, one blind learner, no internet after school"
           ></textarea>
         </label>
 
         <div class="demo-actions">
-          <button id="judgeDemoButton" type="button">Run judge demo</button>
-          <button id="clearButton" type="button">Reset</button>
+          <button id="judgeDemoButton" type="button"><span aria-hidden="true">></span> Run demo</button>
+          <button id="clearButton" type="button"><span aria-hidden="true">x</span> Reset</button>
         </div>
 
         <div class="pipeline-panel" aria-live="polite">
           <div class="panel-title-row">
-            <h3>Local Gemma pipeline</h3>
+            <h3>AI pipeline</h3>
             <span id="analysisTime">Ready</span>
           </div>
           <ol class="pipeline-list">
@@ -122,25 +126,26 @@
           <div class="section-heading">
             <p class="eyebrow">Generated support</p>
             <h2 id="output-title">Inclusive classroom output</h2>
+            <p>Structured lesson materials, accessibility support, and revision help in one workflow.</p>
           </div>
           <div class="toolbar" aria-label="Output actions">
-            <button id="copyButton" type="button">Copy study pack</button>
-            <button id="printButton" type="button">Print worksheet</button>
+            <button id="copyButton" type="button"><span aria-hidden="true">#</span> Copy study pack</button>
+            <button id="printButton" type="button"><span aria-hidden="true">[]</span> Print worksheet</button>
           </div>
         </div>
 
         <div class="impact-strip" aria-label="Generated output summary">
           <div>
-            <strong id="resourceCount">10</strong>
+            <strong id="resourceCount">15</strong>
             <span>resources</span>
           </div>
           <div>
-            <strong id="accessibilityCount">4</strong>
-            <span>accessibility outputs</span>
+            <strong id="accessibilityCount">5</strong>
+            <span>access outputs</span>
           </div>
           <div>
             <strong id="modeLabel">Mock</strong>
-            <span>runtime mode</span>
+            <span>runtime</span>
           </div>
           <div>
             <strong id="languageLabel">Hindi</strong>
@@ -149,9 +154,12 @@
         </div>
 
         <section class="source-summary" aria-labelledby="summary-title">
-          <div>
-            <p class="eyebrow">Gemma 4 reading</p>
-            <h3 id="summary-title">Source summary</h3>
+          <div class="summary-title-row">
+            <div>
+              <p class="eyebrow">Model reading</p>
+              <h3 id="summary-title">Source summary</h3>
+            </div>
+            <span class="mini-pill">Schema validated</span>
           </div>
           <p id="sourceSummary"></p>
           <div id="signalList" class="signal-list" aria-label="Detected learning signals"></div>
@@ -171,7 +179,7 @@
 
         <div id="loadingState" class="loading" hidden>
           <span class="loader" aria-hidden="true"></span>
-          <span id="loadingText">Gemma 4 is reading the classroom image locally...</span>
+          <span id="loadingText">Gemma is reading the classroom image...</span>
         </div>
 
         <div id="teacherMode" class="mode active" role="tabpanel" aria-labelledby="teacherTab">
@@ -208,7 +216,7 @@
           <article class="result-block feature-block">
             <div class="block-title-row">
               <h3>Audio study script</h3>
-              <button id="speakButton" type="button">Play audio</button>
+              <button id="speakButton" type="button"><span aria-hidden="true">></span> Play audio</button>
             </div>
             <p id="audioScript"></p>
           </article>
@@ -232,7 +240,7 @@
             <h3>Ask about this lesson</h3>
             <div class="ask-row">
               <input id="questionInput" type="text" placeholder="Ask a follow-up question" />
-              <button id="askButton" type="button">Ask</button>
+              <button id="askButton" type="button"><span aria-hidden="true">?</span> Ask</button>
             </div>
             <p id="answerText" aria-live="polite"></p>
           </article>
@@ -248,7 +256,7 @@
               </div>
               <div>
                 <dt>Model</dt>
-                <dd id="traceModelValue">gemma4</dd>
+                <dd id="traceModelValue">gemma-4</dd>
               </div>
               <div>
                 <dt>Latency</dt>
